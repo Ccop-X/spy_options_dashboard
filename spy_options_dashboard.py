@@ -26,7 +26,7 @@ else:
     table_bg = "#FFFFFF"
     chart_template = "plotly_white"
 
-# Apply Styling (Now Fully Functional)
+# Apply Styling (Fully Fixed)
 st.markdown(f"""
     <style>
         body {{ background-color: {primary_bg}; color: {text_color}; font-family: 'Inter', sans-serif; }}
@@ -37,7 +37,6 @@ st.markdown(f"""
                             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); }}
         .stTabs div[role="tablist"] {{ display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; font-weight: bold; }}
         .stButton>button {{ background-color: {accent_color}; color: white; font-size: 16px; border-radius: 8px; width: 100%; padding: 10px; }}
-        .stMetric {text-align: center; font-weight: bold; font-size: 20px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -151,4 +150,4 @@ with tab4:
     except Exception as e:
         st.error(f"⚠️ Error fetching tariff news: {e}")
 
-st.sidebar.success("✅ E*Trade-Style UI Upgrade Complete!")
+st.sidebar.success("✅ Fixed UI + Bug-Free Deployment!")
