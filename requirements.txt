@@ -5,5 +5,4 @@ plotly
 lxml
 matplotlib
 datetime
-time
 requests
