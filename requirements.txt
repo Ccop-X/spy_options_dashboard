@@ -2,3 +2,5 @@ streamlit
 yfinance
 pandas
 plotly
+lxml
+--upgrade
