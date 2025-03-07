@@ -6,62 +6,53 @@ import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import requests
-import time
 
 # ------------------ APP CONFIGURATION ------------------ #
 st.set_page_config(page_title="SPY Options Dashboard", layout="wide")
 
+# ------------------ DARK/LIGHT MODE ------------------ #
+theme = st.sidebar.radio("🌗 Choose Theme:", ["Dark Mode", "Light Mode"])
+
+# Apply theme-based styling
+if theme == "Dark Mode":
+    primary_bg = "#121212"
+    text_color = "white"
+    table_bg = "#222222"
+    chart_template = "plotly_dark"
+else:
+    primary_bg = "#FFFFFF"
+    text_color = "black"
+    table_bg = "#F5F5F5"
+    chart_template = "plotly_white"
+
 # Custom Styling
-st.markdown("""
+st.markdown(f"""
     <style>
-        body { font-family: 'Arial', sans-serif; }
-        .stApp { background-color: #121212; color: white; }
-        .sidebar .sidebar-content { background-color: #1E1E1E; color: white; }
-        .stButton>button { background-color: #0066CC; color: white; font-size: 16px; border-radius: 5px; width: 100%; }
-        .stDataFrame { background-color: #222222; border-radius: 5px; padding: 10px; }
-        h1, h2, h3 { color: #17A2B8; }
-        .metric-container { background-color: #222222; padding: 10px; border-radius: 10px; text-align: center; }
+        body {{ background-color: {primary_bg}; color: {text_color}; font-family: 'Arial', sans-serif; }}
+        .stApp {{ background-color: {primary_bg}; }}
+        .stDataFrame {{ background-color: {table_bg}; border-radius: 5px; padding: 10px; }}
+        h1, h2, h3 {{ color: #17A2B8; }}
+        .metric-container {{ background-color: {table_bg}; padding: 10px; border-radius: 10px; text-align: center; }}
+        .tabs-container {{ display: flex; justify-content: center; gap: 20px; }}
+        .stTabs div[role="tablist"] {{ display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }}
     </style>
 """, unsafe_allow_html=True)
 
 # ------------------ COUNTDOWN TIMER FOR JOBS REPORT ------------------ #
 def get_next_jobs_report():
-    """Calculate the next U.S. Non-Farm Payroll (NFP) Jobs Report date (First Friday of the Month at 8:30 AM ET)."""
     today = datetime.date.today()
     year, month = today.year, today.month
-
     if today.day > 7 or today.weekday() >= 4:
         month += 1
         if month > 12:
             month = 1
             year += 1
-
     first_day = datetime.date(year, month, 1)
     first_friday = first_day + datetime.timedelta(days=(4 - first_day.weekday() + 7) % 7)
-
-    jobs_report_datetime = datetime.datetime.combine(first_friday, datetime.time(8, 30))
-    
-    return jobs_report_datetime
+    return datetime.datetime.combine(first_friday, datetime.time(8, 30))
 
 next_jobs_report = get_next_jobs_report()
 st.sidebar.markdown(f"### 🕒 Next Jobs Report: **{next_jobs_report.strftime('%B %d, %Y')} at 8:30 AM ET**")
-
-countdown_placeholder = st.sidebar.empty()
-
-def update_countdown():
-    """Dynamically updates the countdown timer every second."""
-    time_left = next_jobs_report - datetime.datetime.now()
-    
-    if time_left.total_seconds() <= 0:
-        countdown_placeholder.markdown("🚨 **Jobs Report Released!**")
-    else:
-        days, seconds = divmod(time_left.total_seconds(), 86400)
-        hours, seconds = divmod(seconds, 3600)
-        minutes, seconds = divmod(seconds, 60)
-        
-        countdown_placeholder.markdown(f"**{int(days)}d {int(hours)}h {int(minutes)}m {int(seconds)}s remaining**")
-
-update_countdown()
 
 # ------------------ SIDEBAR ------------------ #
 st.sidebar.title("⚙️ Dashboard Settings")
@@ -104,24 +95,34 @@ st.subheader(f"🔹 Options Expiring on {selected_date}")
 # Quick Insights Section
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.markdown("<div class='metric-container'><h3>SPY Price</h3><h2>${:.2f}</h2></div>".format(spy_price), unsafe_allow_html=True)
+    st.markdown(f"<div class='metric-container'><h3>SPY Price</h3><h2>${spy_price:.2f}</h2></div>", unsafe_allow_html=True)
 with col2:
-    st.markdown("<div class='metric-container'><h3>Total Put Volume</h3><h2>{:,}</h2></div>".format(puts["volume"].sum()), unsafe_allow_html=True)
+    st.markdown(f"<div class='metric-container'><h3>Total Put Volume</h3><h2>{puts['volume'].sum():,}</h2></div>", unsafe_allow_html=True)
 with col3:
-    st.markdown("<div class='metric-container'><h3>Total Call Volume</h3><h2>{:,}</h2></div>".format(calls["volume"].sum()), unsafe_allow_html=True)
+    st.markdown(f"<div class='metric-container'><h3>Total Call Volume</h3><h2>{calls['volume'].sum():,}</h2></div>", unsafe_allow_html=True)
 
-# ------------------ TABS ------------------ #
-tab1, tab2, tab3, tab4 = st.tabs(["📉 Put Options", "📈 Call Options", "📊 Backtesting", "📰 Tariff News"])
+# ------------------ TABS (Formatted Properly) ------------------ #
+tab1, tab2, tab3, tab4 = st.tabs(["📉 Puts", "📈 Calls", "📊 Backtesting", "📰 Tariff News"])
 
 # 📉 PUT OPTIONS
 with tab1:
     st.subheader(f"🔻 SPY Put Options Expiring {selected_date}")
     st.dataframe(puts[['strike', 'lastPrice', 'bid', 'ask', 'volume', 'openInterest', 'impliedVolatility']])
+    fig_puts = px.line(puts, x='strike', y='impliedVolatility',
+                        title="📉 Implied Volatility vs Strike Price (Puts)",
+                        labels={'strike': "Strike Price", 'impliedVolatility': "Implied Volatility"},
+                        template=chart_template)
+    st.plotly_chart(fig_puts, use_container_width=True)
 
 # 📈 CALL OPTIONS
 with tab2:
     st.subheader(f"🔼 SPY Call Options Expiring {selected_date}")
     st.dataframe(calls[['strike', 'lastPrice', 'bid', 'ask', 'volume', 'openInterest', 'impliedVolatility']])
+    fig_calls = px.line(calls, x='strike', y='impliedVolatility',
+                        title="📈 Implied Volatility vs Strike Price (Calls)",
+                        labels={'strike': "Strike Price", 'impliedVolatility': "Implied Volatility"},
+                        template=chart_template)
+    st.plotly_chart(fig_calls, use_container_width=True)
 
 # 📊 BACKTESTING
 with tab3:
@@ -132,22 +133,20 @@ with tab3:
 with tab4:
     st.subheader("📰 Latest Tariff News")
     
-    news_api_url = "https://newsapi.org/v2/everything?q=tariff&language=en&sortBy=publishedAt&apiKey=YOUR_NEWS_API_KEY"
+    news_api_url = "https://newsapi.org/v2/everything?q=tariff&language=en&sortBy=publishedAt&apiKey=6c293f797122483d8a71858ab2619844"
 
     try:
         response = requests.get(news_api_url)
         news_data = response.json()
-        
         if "articles" in news_data:
-            for article in news_data["articles"][:5]:  # Show only top 5 articles
+            for article in news_data["articles"][:5]:
                 st.markdown(f"### [{article['title']}]({article['url']})")
                 st.write(f"🗓️ {article['publishedAt']} | 🏛️ {article['source']['name']}")
                 st.write(f"{article['description']}")
                 st.write("---")
         else:
-            st.warning("⚠️ No tariff news available at the moment.")
+            st.warning("⚠️ No tariff news available.")
     except Exception as e:
         st.error(f"⚠️ Error fetching tariff news: {e}")
 
-# ------------------ SUCCESS MESSAGE ------------------ #
-st.sidebar.success("✅ Full Features Restored! Your dashboard is now complete.")
+st.sidebar.success("✅ Dark/Light Mode & UI Overhaul Complete!")
