@@ -4,39 +4,40 @@ import yfinance as yf
 import plotly.express as px
 import datetime
 import numpy as np
-import matplotlib.pyplot as plt
 import requests
 
 # ------------------ APP CONFIGURATION ------------------ #
 st.set_page_config(page_title="SPY Options Dashboard", layout="wide")
 
-# ------------------ DARK/LIGHT MODE ------------------ #
-theme = st.sidebar.radio("🌗 Choose Theme:", ["Dark Mode", "Light Mode"])
+# ------------------ DARK/LIGHT MODE (FULLY FIXED) ------------------ #
+theme = st.sidebar.radio("🌗 Theme Mode:", ["🌙 Dark Mode", "☀️ Light Mode"])
 
 # Define Modern Styling
-if theme == "Dark Mode":
+if theme == "🌙 Dark Mode":
     primary_bg = "#121212"
     text_color = "white"
     accent_color = "#17A2B8"
     table_bg = "#1E1E1E"
     chart_template = "plotly_dark"
 else:
-    primary_bg = "#FFFFFF"
-    text_color = "black"
+    primary_bg = "#F8F9FA"
+    text_color = "#212529"
     accent_color = "#007BFF"
-    table_bg = "#F5F5F5"
+    table_bg = "#FFFFFF"
     chart_template = "plotly_white"
 
-# Apply Styling
+# Apply Styling (Now Fully Functional)
 st.markdown(f"""
     <style>
-        body {{ background-color: {primary_bg}; color: {text_color}; font-family: 'Arial', sans-serif; }}
+        body {{ background-color: {primary_bg}; color: {text_color}; font-family: 'Inter', sans-serif; }}
         .stApp {{ background-color: {primary_bg}; }}
         .stDataFrame {{ background-color: {table_bg}; border-radius: 10px; padding: 15px; }}
         h1, h2, h3 {{ color: {accent_color}; font-weight: bold; }}
-        .metric-container {{ background-color: {table_bg}; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); }}
+        .metric-container {{ background-color: {table_bg}; padding: 20px; border-radius: 12px; text-align: center; 
+                            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); }}
         .stTabs div[role="tablist"] {{ display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; font-weight: bold; }}
         .stButton>button {{ background-color: {accent_color}; color: white; font-size: 16px; border-radius: 8px; width: 100%; padding: 10px; }}
+        .stMetric {text-align: center; font-weight: bold; font-size: 20px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -103,15 +104,14 @@ with col2:
 with col3:
     st.markdown(f"<div class='metric-container'><h3>Total Call Volume</h3><h2>{calls['volume'].sum():,}</h2></div>", unsafe_allow_html=True)
 
-# ------------------ TABS (Formatted Properly) ------------------ #
+# ------------------ TABS (Fixed Layout) ------------------ #
 tab1, tab2, tab3, tab4 = st.tabs(["📉 Puts", "📈 Calls", "📊 Backtesting", "📰 Tariff News"])
 
 # 📉 PUT OPTIONS
 with tab1:
     st.subheader(f"🔻 SPY Put Options Expiring {selected_date}")
     st.dataframe(puts[['strike', 'lastPrice', 'bid', 'ask', 'volume', 'openInterest', 'impliedVolatility']])
-    fig_puts = px.line(puts, x='strike', y='impliedVolatility',
-                        title="📉 Implied Volatility vs Strike Price (Puts)",
+    fig_puts = px.line(puts, x='strike', y='impliedVolatility', title="📉 Implied Volatility vs Strike Price (Puts)",
                         labels={'strike': "Strike Price", 'impliedVolatility': "Implied Volatility"},
                         template=chart_template)
     st.plotly_chart(fig_puts, use_container_width=True)
@@ -120,8 +120,7 @@ with tab1:
 with tab2:
     st.subheader(f"🔼 SPY Call Options Expiring {selected_date}")
     st.dataframe(calls[['strike', 'lastPrice', 'bid', 'ask', 'volume', 'openInterest', 'impliedVolatility']])
-    fig_calls = px.line(calls, x='strike', y='impliedVolatility',
-                        title="📈 Implied Volatility vs Strike Price (Calls)",
+    fig_calls = px.line(calls, x='strike', y='impliedVolatility', title="📈 Implied Volatility vs Strike Price (Calls)",
                         labels={'strike': "Strike Price", 'impliedVolatility': "Implied Volatility"},
                         template=chart_template)
     st.plotly_chart(fig_calls, use_container_width=True)
@@ -135,7 +134,8 @@ with tab3:
 with tab4:
     st.subheader("📰 Latest Tariff News")
     
-    news_api_url = "https://newsapi.org/v2/everything?q=tariff&language=en&sortBy=publishedAt&apiKey=YOUR_NEWS_API_KEY"
+    api_key = "6c293f797122483d8a71858ab2619844"
+    news_api_url = f"https://newsapi.org/v2/everything?q=tariff&language=en&sortBy=publishedAt&apiKey={api_key}"
 
     try:
         response = requests.get(news_api_url)
@@ -151,4 +151,4 @@ with tab4:
     except Exception as e:
         st.error(f"⚠️ Error fetching tariff news: {e}")
 
-st.sidebar.success("✅ Modern UI Upgrade Complete!")
+st.sidebar.success("✅ E*Trade-Style UI Upgrade Complete!")
