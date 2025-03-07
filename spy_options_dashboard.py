@@ -21,7 +21,6 @@ st.markdown("""
         .stDataFrame { background-color: #222222; border-radius: 5px; padding: 10px; }
         h1, h2, h3 { color: #17A2B8; }
         .metric-container { background-color: #222222; padding: 10px; border-radius: 10px; text-align: center; }
-        .countdown-container { position: absolute; top: 10px; right: 10px; font-size: 18px; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -44,28 +43,31 @@ def get_next_jobs_report():
 
     # Set the jobs report release time (8:30 AM ET)
     jobs_report_datetime = datetime.datetime.combine(first_friday, datetime.time(8, 30))
-    
+
     return jobs_report_datetime
 
 next_jobs_report = get_next_jobs_report()
 
-# Display Countdown Timer
+# Display Countdown Timer in the Sidebar
 st.sidebar.markdown(f"### 🕒 Next Jobs Report: **{next_jobs_report.strftime('%B %d, %Y')} at 8:30 AM ET**")
 
-def countdown_timer():
-    while True:
-        time_left = next_jobs_report - datetime.datetime.now()
-        if time_left.total_seconds() <= 0:
-            st.sidebar.markdown("🚨 **Jobs Report Released!**")
-            break
-        else:
-            days, seconds = divmod(time_left.total_seconds(), 86400)
-            hours, seconds = divmod(seconds, 3600)
-            minutes, seconds = divmod(seconds, 60)
-            st.sidebar.markdown(f"**{int(days)}d {int(hours)}h {int(minutes)}m {int(seconds)}s remaining**")
-            time.sleep(1)
+countdown_placeholder = st.sidebar.empty()  # Reserve space for countdown
 
-countdown_timer()
+def update_countdown():
+    """Dynamically updates the countdown timer every second"""
+    time_left = next_jobs_report - datetime.datetime.now()
+    
+    if time_left.total_seconds() <= 0:
+        countdown_placeholder.markdown("🚨 **Jobs Report Released!**")
+    else:
+        days, seconds = divmod(time_left.total_seconds(), 86400)
+        hours, seconds = divmod(seconds, 3600)
+        minutes, seconds = divmod(seconds, 60)
+        
+        countdown_placeholder.markdown(f"**{int(days)}d {int(hours)}h {int(minutes)}m {int(seconds)}s remaining**")
+
+# Refresh countdown every second
+update_countdown()
 
 # ------------------ SIDEBAR ------------------ #
 st.sidebar.title("⚙️ Dashboard Settings")
