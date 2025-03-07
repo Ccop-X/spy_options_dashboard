@@ -6,6 +6,7 @@ import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import requests
+import time
 
 # ------------------ APP CONFIGURATION ------------------ #
 st.set_page_config(page_title="SPY Options Dashboard", layout="wide")
@@ -20,8 +21,51 @@ st.markdown("""
         .stDataFrame { background-color: #222222; border-radius: 5px; padding: 10px; }
         h1, h2, h3 { color: #17A2B8; }
         .metric-container { background-color: #222222; padding: 10px; border-radius: 10px; text-align: center; }
+        .countdown-container { position: absolute; top: 10px; right: 10px; font-size: 18px; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
+
+# ------------------ COUNTDOWN TIMER FOR JOBS REPORT ------------------ #
+def get_next_jobs_report():
+    """Calculate the date of the next U.S. Non-Farm Payroll (NFP) Jobs Report (First Friday of the Month at 8:30 AM ET)"""
+    today = datetime.date.today()
+    year, month = today.year, today.month
+
+    # Move to next month if today is past the first Friday
+    if today.day > 7 or today.weekday() >= 4:
+        month += 1
+        if month > 12:
+            month = 1
+            year += 1
+
+    # Find the first Friday of the month
+    first_day = datetime.date(year, month, 1)
+    first_friday = first_day + datetime.timedelta(days=(4 - first_day.weekday() + 7) % 7)
+
+    # Set the jobs report release time (8:30 AM ET)
+    jobs_report_datetime = datetime.datetime.combine(first_friday, datetime.time(8, 30))
+    
+    return jobs_report_datetime
+
+next_jobs_report = get_next_jobs_report()
+
+# Display Countdown Timer
+st.sidebar.markdown(f"### 🕒 Next Jobs Report: **{next_jobs_report.strftime('%B %d, %Y')} at 8:30 AM ET**")
+
+def countdown_timer():
+    while True:
+        time_left = next_jobs_report - datetime.datetime.now()
+        if time_left.total_seconds() <= 0:
+            st.sidebar.markdown("🚨 **Jobs Report Released!**")
+            break
+        else:
+            days, seconds = divmod(time_left.total_seconds(), 86400)
+            hours, seconds = divmod(seconds, 3600)
+            minutes, seconds = divmod(seconds, 60)
+            st.sidebar.markdown(f"**{int(days)}d {int(hours)}h {int(minutes)}m {int(seconds)}s remaining**")
+            time.sleep(1)
+
+countdown_timer()
 
 # ------------------ SIDEBAR ------------------ #
 st.sidebar.title("⚙️ Dashboard Settings")
@@ -70,55 +114,5 @@ with col2:
 with col3:
     st.markdown("<div class='metric-container'><h3>Total Call Volume</h3><h2>{:,}</h2></div>".format(calls["volume"].sum()), unsafe_allow_html=True)
 
-# ------------------ TABS ------------------ #
-tab1, tab2, tab3, tab4 = st.tabs(["📉 Put Options", "📈 Call Options", "📊 Backtesting", "📰 Tariff News"])
-
-# 📉 PUT OPTIONS
-with tab1:
-    st.subheader(f"🔻 SPY Put Options Expiring {selected_date}")
-    st.dataframe(puts[['strike', 'lastPrice', 'bid', 'ask', 'volume', 'openInterest', 'impliedVolatility']])
-    fig_puts = px.line(puts, x='strike', y='impliedVolatility',
-                        title="📉 Implied Volatility vs Strike Price (Puts)",
-                        labels={'strike': "Strike Price", 'impliedVolatility': "Implied Volatility"},
-                        template="plotly_dark")
-    st.plotly_chart(fig_puts, use_container_width=True)
-
-# 📈 CALL OPTIONS
-with tab2:
-    st.subheader(f"🔼 SPY Call Options Expiring {selected_date}")
-    st.dataframe(calls[['strike', 'lastPrice', 'bid', 'ask', 'volume', 'openInterest', 'impliedVolatility']])
-    fig_calls = px.line(calls, x='strike', y='impliedVolatility',
-                        title="📈 Implied Volatility vs Strike Price (Calls)",
-                        labels={'strike': "Strike Price", 'impliedVolatility': "Implied Volatility"},
-                        template="plotly_dark")
-    st.plotly_chart(fig_calls, use_container_width=True)
-
-# 📊 BACKTESTING
-with tab3:
-    st.subheader("📊 Options Backtesting")
-    st.write("🔍 Backtesting module coming soon with customizable strategies!")
-
-# 📰 TARIFF NEWS
-with tab4:
-    st.subheader("📰 Latest Tariff News")
-    
-    # Fetch Tariff News from an API
-    news_api_url = "https://newsapi.org/v2/everything?q=tariff&language=en&sortBy=publishedAt&apiKey=6c293f797122483d8a71858ab2619844"
-    
-    try:
-        response = requests.get(news_api_url)
-        news_data = response.json()
-        
-        if "articles" in news_data:
-            for article in news_data["articles"][:5]:  # Show only top 5 articles
-                st.markdown(f"### [{article['title']}]({article['url']})")
-                st.write(f"🗓️ {article['publishedAt']} | 🏛️ {article['source']['name']}")
-                st.write(f"{article['description']}")
-                st.write("---")
-        else:
-            st.warning("⚠️ No tariff news available at the moment.")
-    except Exception as e:
-        st.error(f"⚠️ Error fetching tariff news: {e}")
-
 # ------------------ SUCCESS MESSAGE ------------------ #
-st.sidebar.success("✅ Tariff News Section Added! Check the latest updates.")
+st.sidebar.success("✅ Countdown to Jobs Report Added! Watch for the next release.")
