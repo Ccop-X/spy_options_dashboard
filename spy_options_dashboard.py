@@ -103,7 +103,7 @@ with tab4:
     st.subheader("📰 Latest Tariff News")
     
     # Fetch Tariff News from an API
-    news_api_url = "https://newsapi.org/v2/everything?q=tariff&language=en&sortBy=publishedAt&apiKey=YOUR_NEWS_API_KEY"
+    news_api_url = "https://newsapi.org/v2/everything?q=tariff&language=en&sortBy=publishedAt&apiKey=6c293f797122483d8a71858ab2619844"
     
     try:
         response = requests.get(news_api_url)
