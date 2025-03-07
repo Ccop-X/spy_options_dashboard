@@ -26,35 +26,30 @@ st.markdown("""
 
 # ------------------ COUNTDOWN TIMER FOR JOBS REPORT ------------------ #
 def get_next_jobs_report():
-    """Calculate the date of the next U.S. Non-Farm Payroll (NFP) Jobs Report (First Friday of the Month at 8:30 AM ET)"""
+    """Calculate the next U.S. Non-Farm Payroll (NFP) Jobs Report date (First Friday of the Month at 8:30 AM ET)."""
     today = datetime.date.today()
     year, month = today.year, today.month
 
-    # Move to next month if today is past the first Friday
     if today.day > 7 or today.weekday() >= 4:
         month += 1
         if month > 12:
             month = 1
             year += 1
 
-    # Find the first Friday of the month
     first_day = datetime.date(year, month, 1)
     first_friday = first_day + datetime.timedelta(days=(4 - first_day.weekday() + 7) % 7)
 
-    # Set the jobs report release time (8:30 AM ET)
     jobs_report_datetime = datetime.datetime.combine(first_friday, datetime.time(8, 30))
-
+    
     return jobs_report_datetime
 
 next_jobs_report = get_next_jobs_report()
-
-# Display Countdown Timer in the Sidebar
 st.sidebar.markdown(f"### 🕒 Next Jobs Report: **{next_jobs_report.strftime('%B %d, %Y')} at 8:30 AM ET**")
 
-countdown_placeholder = st.sidebar.empty()  # Reserve space for countdown
+countdown_placeholder = st.sidebar.empty()
 
 def update_countdown():
-    """Dynamically updates the countdown timer every second"""
+    """Dynamically updates the countdown timer every second."""
     time_left = next_jobs_report - datetime.datetime.now()
     
     if time_left.total_seconds() <= 0:
@@ -66,7 +61,6 @@ def update_countdown():
         
         countdown_placeholder.markdown(f"**{int(days)}d {int(hours)}h {int(minutes)}m {int(seconds)}s remaining**")
 
-# Refresh countdown every second
 update_countdown()
 
 # ------------------ SIDEBAR ------------------ #
@@ -116,5 +110,44 @@ with col2:
 with col3:
     st.markdown("<div class='metric-container'><h3>Total Call Volume</h3><h2>{:,}</h2></div>".format(calls["volume"].sum()), unsafe_allow_html=True)
 
+# ------------------ TABS ------------------ #
+tab1, tab2, tab3, tab4 = st.tabs(["📉 Put Options", "📈 Call Options", "📊 Backtesting", "📰 Tariff News"])
+
+# 📉 PUT OPTIONS
+with tab1:
+    st.subheader(f"🔻 SPY Put Options Expiring {selected_date}")
+    st.dataframe(puts[['strike', 'lastPrice', 'bid', 'ask', 'volume', 'openInterest', 'impliedVolatility']])
+
+# 📈 CALL OPTIONS
+with tab2:
+    st.subheader(f"🔼 SPY Call Options Expiring {selected_date}")
+    st.dataframe(calls[['strike', 'lastPrice', 'bid', 'ask', 'volume', 'openInterest', 'impliedVolatility']])
+
+# 📊 BACKTESTING
+with tab3:
+    st.subheader("📊 Options Backtesting")
+    st.write("🔍 Backtesting module coming soon with customizable strategies!")
+
+# 📰 TARIFF NEWS
+with tab4:
+    st.subheader("📰 Latest Tariff News")
+    
+    news_api_url = "https://newsapi.org/v2/everything?q=tariff&language=en&sortBy=publishedAt&apiKey=YOUR_NEWS_API_KEY"
+
+    try:
+        response = requests.get(news_api_url)
+        news_data = response.json()
+        
+        if "articles" in news_data:
+            for article in news_data["articles"][:5]:  # Show only top 5 articles
+                st.markdown(f"### [{article['title']}]({article['url']})")
+                st.write(f"🗓️ {article['publishedAt']} | 🏛️ {article['source']['name']}")
+                st.write(f"{article['description']}")
+                st.write("---")
+        else:
+            st.warning("⚠️ No tariff news available at the moment.")
+    except Exception as e:
+        st.error(f"⚠️ Error fetching tariff news: {e}")
+
 # ------------------ SUCCESS MESSAGE ------------------ #
-st.sidebar.success("✅ Countdown to Jobs Report Added! Watch for the next release.")
+st.sidebar.success("✅ Full Features Restored! Your dashboard is now complete.")
