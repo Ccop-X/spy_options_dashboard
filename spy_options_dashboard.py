@@ -15,12 +15,12 @@ theme = st.sidebar.radio("🌗 Theme Mode:", ["🌙 Dark Mode", "☀️ Light Mo
 # Define Modern Styling
 if theme == "🌙 Dark Mode":
     primary_bg = "#121212"
-    text_color = "white"
+    text_color = "#E0E0E0"
     accent_color = "#17A2B8"
     table_bg = "#1E1E1E"
     chart_template = "plotly_dark"
 else:
-    primary_bg = "#F8F9FA"
+    primary_bg = "#F4F4F4"
     text_color = "#212529"
     accent_color = "#007BFF"
     table_bg = "#FFFFFF"
@@ -29,14 +29,14 @@ else:
 # Apply Styling (Fully Fixed)
 st.markdown(f"""
     <style>
-        body {{ background-color: {primary_bg}; color: {text_color}; font-family: 'Inter', sans-serif; }}
-        .stApp {{ background-color: {primary_bg}; }}
+        body, .stApp {{ background-color: {primary_bg}; color: {text_color}; font-family: 'Inter', sans-serif; }}
         .stDataFrame {{ background-color: {table_bg}; border-radius: 10px; padding: 15px; }}
         h1, h2, h3 {{ color: {accent_color}; font-weight: bold; }}
         .metric-container {{ background-color: {table_bg}; padding: 20px; border-radius: 12px; text-align: center; 
                             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); }}
         .stTabs div[role="tablist"] {{ display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; font-weight: bold; }}
         .stButton>button {{ background-color: {accent_color}; color: white; font-size: 16px; border-radius: 8px; width: 100%; padding: 10px; }}
+        .stSidebar {{ background-color: {table_bg}; border-radius: 10px; padding: 10px; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -150,4 +150,4 @@ with tab4:
     except Exception as e:
         st.error(f"⚠️ Error fetching tariff news: {e}")
 
-st.sidebar.success("✅ Fixed UI + Bug-Free Deployment!")
+st.sidebar.success("✅ Final UI Fixes Applied! Looks like a Real Trading App.")
