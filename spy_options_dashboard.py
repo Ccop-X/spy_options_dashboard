@@ -135,7 +135,7 @@ with tab3:
 with tab4:
     st.subheader("📰 Latest Tariff News")
     
-    news_api_url = "https://newsapi.org/v2/everything?q=tariff&language=en&sortBy=publishedAt&apiKey=YOUR_NEWS_API_KEY"
+    news_api_url = "https://newsapi.org/v2/everything?q=tariff&language=en&sortBy=publishedAt&apiKey=6c293f797122483d8a71858ab2619844"
 
     try:
         response = requests.get(news_api_url)
@@ -151,4 +151,4 @@ with tab4:
     except Exception as e:
         st.error(f"⚠️ Error fetching tariff news: {e}")
 
-st.sidebar.success("✅ UI Redesign Complete!")
+st.sidebar.success("✅ Modern UI Upgrade Complete!")
