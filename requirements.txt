@@ -3,4 +3,3 @@ yfinance
 pandas
 plotly
 lxml
---upgrade
