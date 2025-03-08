@@ -126,4 +126,4 @@ with tab2:
                         template=chart_template)
     st.plotly_chart(fig_calls, use_container_width=True)
 
-st.sidebar.success("✅ Final UI Overhaul Complete! Should Now Look Like a Real Trading App.")
+st.sidebar.success("✅ Final UI Overhaul Complete! Should Now Look Like a Real Trading App V2.")
