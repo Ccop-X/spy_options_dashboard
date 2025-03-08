@@ -115,4 +115,4 @@ with tab2:
                         template=chart_template)
     st.plotly_chart(fig_calls, use_container_width=True)
 
-st.sidebar.success("✅ FINAL UI UPDATE: This version WILL be applied in deployment.")
+st.sidebar.success("✅ FINAL UI UPDATE: This version WILL be applied in deployment V5.")
