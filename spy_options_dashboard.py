@@ -7,7 +7,7 @@ import numpy as np
 import requests
 
 # ------------------ APP CONFIGURATION ------------------ #
-st.set_page_config(page_title="SPY Options Dashboard", layout="wide")
+st.set_page_config(page_title="SPY Options Dashboard V2", layout="wide")
 
 # ------------------ DARK/LIGHT MODE (FULLY FIXED) ------------------ #
 theme = st.sidebar.radio("🌗 Theme Mode:", ["🌙 Dark Mode", "☀️ Light Mode"])
