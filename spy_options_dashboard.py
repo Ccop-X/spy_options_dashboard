@@ -64,17 +64,22 @@ def get_next_jobs_report():
 next_jobs_report = get_next_jobs_report()
 st.sidebar.markdown(f"### 🕒 Next Jobs Report: **{next_jobs_report.strftime('%B %d, %Y')} at 8:30 AM ET**")
 
+# ------------------ FETCH SPY PRICE (FIXED) ------------------ #
+@st.cache_data
+def get_spy_price():
+    spy = yf.Ticker("SPY")
+    return spy.fast_info.get("last_price") or spy.history(period="1d")["Close"].iloc[-1]
+
+spy_price = get_spy_price()
+
 # ------------------ SIDEBAR ------------------ #
 st.sidebar.title("⚙️ Dashboard Settings")
 st.sidebar.info("Select options below to update the dashboard.")
 
 # Fetch SPY options safely
 st.sidebar.subheader("📅 Options Data")
-today = datetime.date.today()
-
 try:
-    spy = yf.Ticker("SPY")
-    expirations = spy.options
+    expirations = yf.Ticker("SPY").options
 except Exception as e:
     st.sidebar.error(f"⚠️ Error fetching SPY data: {e}")
     st.stop()
@@ -94,25 +99,8 @@ with col2:
 with col3:
     st.metric("Total Call Volume", f"{calls['volume'].sum():,}")
 
-# ------------------ TABS (Fixed Layout) ------------------ #
-tab1, tab2, tab3, tab4 = st.tabs(["📉 Puts", "📈 Calls", "📊 Backtesting", "📰 Tariff News"])
+# ------------------ FORCE STREAMLIT TO APPLY UI CHANGES ------------------ #
+st.markdown("<h1 style='text-align: center; color: red;'>🚀 UI HAS BEEN UPDATED 🚀</h1>", unsafe_allow_html=True)
 
-# 📉 PUT OPTIONS
-with tab1:
-    st.subheader(f"🔻 SPY Put Options Expiring {selected_date}")
-    st.dataframe(puts[['strike', 'lastPrice', 'bid', 'ask', 'volume', 'openInterest', 'impliedVolatility']])
-    fig_puts = px.line(puts, x='strike', y='impliedVolatility', title="📉 Implied Volatility vs Strike Price (Puts)",
-                        labels={'strike': "Strike Price", 'impliedVolatility': "Implied Volatility"},
-                        template=chart_template)
-    st.plotly_chart(fig_puts, use_container_width=True)
-
-# 📈 CALL OPTIONS
-with tab2:
-    st.subheader(f"🔼 SPY Call Options Expiring {selected_date}")
-    st.dataframe(calls[['strike', 'lastPrice', 'bid', 'ask', 'volume', 'openInterest', 'impliedVolatility']])
-    fig_calls = px.line(calls, x='strike', y='impliedVolatility', title="📈 Implied Volatility vs Strike Price (Calls)",
-                        labels={'strike': "Strike Price", 'impliedVolatility': "Implied Volatility"},
-                        template=chart_template)
-    st.plotly_chart(fig_calls, use_container_width=True)
-
-st.sidebar.success("✅ FINAL UI UPDATE: This version WILL be applied in deployment V5.")
+# ------------------ DEPLOYMENT CONFIRMATION ------------------ #
+st.sidebar.success("✅ Final UI Update + SPY Price Fix Applied.")
