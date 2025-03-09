@@ -5,11 +5,12 @@ import plotly.express as px
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
+import requests
 
 # ------------------ APP CONFIGURATION ------------------ #
 st.set_page_config(page_title="SPY Options Dashboard", layout="wide")
 
-# Custom Styling for a Professional Look
+# Custom Styling
 st.markdown("""
     <style>
         body { font-family: 'Arial', sans-serif; }
@@ -70,7 +71,7 @@ with col3:
     st.markdown("<div class='metric-container'><h3>Total Call Volume</h3><h2>{:,}</h2></div>".format(calls["volume"].sum()), unsafe_allow_html=True)
 
 # ------------------ TABS ------------------ #
-tab1, tab2, tab3 = st.tabs(["📉 Put Options", "📈 Call Options", "📊 Backtesting"])
+tab1, tab2, tab3, tab4 = st.tabs(["📉 Put Options", "📈 Call Options", "📊 Backtesting", "📰 Tariff News"])
 
 # 📉 PUT OPTIONS
 with tab1:
@@ -95,45 +96,29 @@ with tab2:
 # 📊 BACKTESTING
 with tab3:
     st.subheader("📊 Options Backtesting")
+    st.write("🔍 Backtesting module coming soon with customizable strategies!")
 
-    # Fetch historical SPY data
-    spy_data = spy.history(period="1y")
-
-    # RSI Calculation for Strategy
-    window_length = 14
-    delta = spy_data["Close"].diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=window_length).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=window_length).mean()
-    rs = gain / loss
-    spy_data["RSI"] = 100 - (100 / (1 + rs))
-
-    # Define entry and exit signals
-    spy_data["Buy Put"] = (spy_data["RSI"] > 70)  # Overbought condition
-    spy_data["Sell Put"] = (spy_data["RSI"] < 50)  # Exit condition
-
-    # Simulated option price (2% of SPY close price)
-    spy_data["Put Price"] = np.where(spy_data["Buy Put"], spy_data["Close"] * 0.02, np.nan)
-    spy_data["Put Exit Price"] = np.where(spy_data["Sell Put"], spy_data["Put Price"].shift() * 1.2, np.nan)
-
-    # Calculate Profit/Loss
-    spy_data["Profit/Loss"] = spy_data["Put Exit Price"] - spy_data["Put Price"]
-    spy_data["Cumulative P/L"] = spy_data["Profit/Loss"].cumsum()
-
-    # Display trades
-    trades = spy_data[spy_data["Buy Put"] == True][["Close", "RSI", "Put Price", "Put Exit Price", "Profit/Loss"]].dropna()
-    st.dataframe(trades)
-
-    # Plot P/L Over Time
-    fig_pl = plt.figure(figsize=(10, 5))
-    plt.plot(spy_data.index, spy_data["Cumulative P/L"], label="Cumulative P/L", color="blue")
-    plt.axhline(0, linestyle="--", color="gray")
-    plt.xlabel("Date")
-    plt.ylabel("Profit/Loss ($)")
-    plt.title("📊 SPY Put Options Backtest: Cumulative P/L Over Time")
-    plt.legend()
-    plt.grid()
-    st.pyplot(fig_pl)
+# 📰 TARIFF NEWS
+with tab4:
+    st.subheader("📰 Latest Tariff News")
+    
+    # Fetch Tariff News from an API
+    news_api_url = "https://newsapi.org/v2/everything?q=tariff&language=en&sortBy=publishedAt&apiKey=YOUR_NEWS_API_KEY"
+    
+    try:
+        response = requests.get(news_api_url)
+        news_data = response.json()
+        
+        if "articles" in news_data:
+            for article in news_data["articles"][:5]:  # Show only top 5 articles
+                st.markdown(f"### [{article['title']}]({article['url']})")
+                st.write(f"🗓️ {article['publishedAt']} | 🏛️ {article['source']['name']}")
+                st.write(f"{article['description']}")
+                st.write("---")
+        else:
+            st.warning("⚠️ No tariff news available at the moment.")
+    except Exception as e:
+        st.error(f"⚠️ Error fetching tariff news: {e}")
 
 # ------------------ SUCCESS MESSAGE ------------------ #
-st.sidebar.success("✅ Backtesting added! Run simulations inside your dashboard.")
-
+st.sidebar.success("✅ Tariff News Section Added! Check the latest updates.")
