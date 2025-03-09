@@ -4,73 +4,23 @@ import yfinance as yf
 import plotly.express as px
 import datetime
 import numpy as np
-import requests
+import matplotlib.pyplot as plt
 
 # ------------------ APP CONFIGURATION ------------------ #
 st.set_page_config(page_title="SPY Options Dashboard", layout="wide")
 
-# ------------------ DARK/LIGHT MODE (FULLY FIXED & FORCED TO APPLY) ------------------ #
-theme = st.sidebar.radio("🌗 Theme Mode:", ["🌙 Dark Mode", "☀️ Light Mode"])
-
-# Define Modern Styling (Now Guaranteed to Apply)
-if theme == "🌙 Dark Mode":
-    st.markdown(
-        """
-        <style>
-            body, .stApp { background-color: #121212; color: #E0E0E0; font-family: 'Inter', sans-serif; }
-            .stDataFrame { background-color: #1E1E1E; border-radius: 10px; padding: 15px; }
-            .stSidebar { background-color: #1E1E1E; border-radius: 10px; padding: 15px; }
-            h1, h2, h3 { color: #17A2B8; font-weight: bold; }
-            .metric-container { background-color: #1E1E1E; padding: 20px; border-radius: 12px; text-align: center; 
-                                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); }
-            .stTabs div[role="tablist"] { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; font-weight: bold; }
-            .stButton>button { background-color: #17A2B8; color: white; font-size: 16px; border-radius: 8px; width: 100%; padding: 10px; }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-    chart_template = "plotly_dark"
-else:
-    st.markdown(
-        """
-        <style>
-            body, .stApp { background-color: #F8F9FA; color: #212529; font-family: 'Inter', sans-serif; }
-            .stDataFrame { background-color: #FFFFFF; border-radius: 10px; padding: 15px; }
-            .stSidebar { background-color: #E9ECEF; border-radius: 10px; padding: 15px; }
-            h1, h2, h3 { color: #007BFF; font-weight: bold; }
-            .metric-container { background-color: #FFFFFF; padding: 20px; border-radius: 12px; text-align: center; 
-                                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); }
-            .stTabs div[role="tablist"] { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; font-weight: bold; }
-            .stButton>button { background-color: #007BFF; color: white; font-size: 16px; border-radius: 8px; width: 100%; padding: 10px; }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-    chart_template = "plotly_white"
-
-# ------------------ COUNTDOWN TIMER FOR JOBS REPORT ------------------ #
-def get_next_jobs_report():
-    today = datetime.date.today()
-    year, month = today.year, today.month
-    if today.day > 7 or today.weekday() >= 4:
-        month += 1
-        if month > 12:
-            month = 1
-            year += 1
-    first_day = datetime.date(year, month, 1)
-    first_friday = first_day + datetime.timedelta(days=(4 - first_day.weekday() + 7) % 7)
-    return datetime.datetime.combine(first_friday, datetime.time(8, 30))
-
-next_jobs_report = get_next_jobs_report()
-st.sidebar.markdown(f"### 🕒 Next Jobs Report: **{next_jobs_report.strftime('%B %d, %Y')} at 8:30 AM ET**")
-
-# ------------------ FETCH SPY PRICE (FIXED) ------------------ #
-@st.cache_data
-def get_spy_price():
-    spy = yf.Ticker("SPY")
-    return spy.fast_info.get("last_price") or spy.history(period="1d")["Close"].iloc[-1]
-
-spy_price = get_spy_price()
+# Custom Styling for a Professional Look
+st.markdown("""
+    <style>
+        body { font-family: 'Arial', sans-serif; }
+        .stApp { background-color: #121212; color: white; }
+        .sidebar .sidebar-content { background-color: #1E1E1E; color: white; }
+        .stButton>button { background-color: #0066CC; color: white; font-size: 16px; border-radius: 5px; width: 100%; }
+        .stDataFrame { background-color: #222222; border-radius: 5px; padding: 10px; }
+        h1, h2, h3 { color: #17A2B8; }
+        .metric-container { background-color: #222222; padding: 10px; border-radius: 10px; text-align: center; }
+    </style>
+""", unsafe_allow_html=True)
 
 # ------------------ SIDEBAR ------------------ #
 st.sidebar.title("⚙️ Dashboard Settings")
@@ -78,13 +28,33 @@ st.sidebar.info("Select options below to update the dashboard.")
 
 # Fetch SPY options safely
 st.sidebar.subheader("📅 Options Data")
+today = datetime.date.today()
+
 try:
-    expirations = yf.Ticker("SPY").options
+    spy = yf.Ticker("SPY")
+    expirations = spy.options
 except Exception as e:
     st.sidebar.error(f"⚠️ Error fetching SPY data: {e}")
     st.stop()
 
 selected_date = st.sidebar.selectbox("📆 Select Expiration Date", expirations)
+
+# ------------------ DATA FETCHING ------------------ #
+with st.spinner("Fetching latest SPY options data..."):
+    try:
+        options_chain = spy.option_chain(selected_date)
+        puts = options_chain.puts
+        calls = options_chain.calls
+    except Exception as e:
+        st.error(f"⚠️ Error fetching options chain: {e}")
+        st.stop()
+
+# Get SPY current price
+try:
+    spy_price = spy.history(period="1d")["Close"].iloc[-1]
+    st.sidebar.metric(label="📈 SPY Current Price", value=f"${spy_price:.2f}")
+except:
+    st.sidebar.warning("⚠️ Unable to fetch SPY price.")
 
 # ------------------ DASHBOARD UI ------------------ #
 st.title("📊 SPY Options Dashboard")
@@ -93,14 +63,77 @@ st.subheader(f"🔹 Options Expiring on {selected_date}")
 # Quick Insights Section
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric("SPY Price", f"${spy_price:.2f}")
+    st.markdown("<div class='metric-container'><h3>SPY Price</h3><h2>${:.2f}</h2></div>".format(spy_price), unsafe_allow_html=True)
 with col2:
-    st.metric("Total Put Volume", f"{puts['volume'].sum():,}")
+    st.markdown("<div class='metric-container'><h3>Total Put Volume</h3><h2>{:,}</h2></div>".format(puts["volume"].sum()), unsafe_allow_html=True)
 with col3:
-    st.metric("Total Call Volume", f"{calls['volume'].sum():,}")
+    st.markdown("<div class='metric-container'><h3>Total Call Volume</h3><h2>{:,}</h2></div>".format(calls["volume"].sum()), unsafe_allow_html=True)
 
-# ------------------ FORCE STREAMLIT TO APPLY UI CHANGES ------------------ #
-st.markdown("<h1 style='text-align: center; color: red;'>🚀 UI HAS BEEN UPDATED 🚀</h1>", unsafe_allow_html=True)
+# ------------------ TABS ------------------ #
+tab1, tab2, tab3 = st.tabs(["📉 Put Options", "📈 Call Options", "📊 Backtesting"])
 
-# ------------------ DEPLOYMENT CONFIRMATION ------------------ #
-st.sidebar.success("✅ Final UI Update + SPY Price Fix Applied.")
+# 📉 PUT OPTIONS
+with tab1:
+    st.subheader(f"🔻 SPY Put Options Expiring {selected_date}")
+    st.dataframe(puts[['strike', 'lastPrice', 'bid', 'ask', 'volume', 'openInterest', 'impliedVolatility']])
+    fig_puts = px.line(puts, x='strike', y='impliedVolatility',
+                        title="📉 Implied Volatility vs Strike Price (Puts)",
+                        labels={'strike': "Strike Price", 'impliedVolatility': "Implied Volatility"},
+                        template="plotly_dark")
+    st.plotly_chart(fig_puts, use_container_width=True)
+
+# 📈 CALL OPTIONS
+with tab2:
+    st.subheader(f"🔼 SPY Call Options Expiring {selected_date}")
+    st.dataframe(calls[['strike', 'lastPrice', 'bid', 'ask', 'volume', 'openInterest', 'impliedVolatility']])
+    fig_calls = px.line(calls, x='strike', y='impliedVolatility',
+                        title="📈 Implied Volatility vs Strike Price (Calls)",
+                        labels={'strike': "Strike Price", 'impliedVolatility': "Implied Volatility"},
+                        template="plotly_dark")
+    st.plotly_chart(fig_calls, use_container_width=True)
+
+# 📊 BACKTESTING
+with tab3:
+    st.subheader("📊 Options Backtesting")
+
+    # Fetch historical SPY data
+    spy_data = spy.history(period="1y")
+
+    # RSI Calculation for Strategy
+    window_length = 14
+    delta = spy_data["Close"].diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=window_length).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=window_length).mean()
+    rs = gain / loss
+    spy_data["RSI"] = 100 - (100 / (1 + rs))
+
+    # Define entry and exit signals
+    spy_data["Buy Put"] = (spy_data["RSI"] > 70)  # Overbought condition
+    spy_data["Sell Put"] = (spy_data["RSI"] < 50)  # Exit condition
+
+    # Simulated option price (2% of SPY close price)
+    spy_data["Put Price"] = np.where(spy_data["Buy Put"], spy_data["Close"] * 0.02, np.nan)
+    spy_data["Put Exit Price"] = np.where(spy_data["Sell Put"], spy_data["Put Price"].shift() * 1.2, np.nan)
+
+    # Calculate Profit/Loss
+    spy_data["Profit/Loss"] = spy_data["Put Exit Price"] - spy_data["Put Price"]
+    spy_data["Cumulative P/L"] = spy_data["Profit/Loss"].cumsum()
+
+    # Display trades
+    trades = spy_data[spy_data["Buy Put"] == True][["Close", "RSI", "Put Price", "Put Exit Price", "Profit/Loss"]].dropna()
+    st.dataframe(trades)
+
+    # Plot P/L Over Time
+    fig_pl = plt.figure(figsize=(10, 5))
+    plt.plot(spy_data.index, spy_data["Cumulative P/L"], label="Cumulative P/L", color="blue")
+    plt.axhline(0, linestyle="--", color="gray")
+    plt.xlabel("Date")
+    plt.ylabel("Profit/Loss ($)")
+    plt.title("📊 SPY Put Options Backtest: Cumulative P/L Over Time")
+    plt.legend()
+    plt.grid()
+    st.pyplot(fig_pl)
+
+# ------------------ SUCCESS MESSAGE ------------------ #
+st.sidebar.success("✅ Backtesting added! Run simulations inside your dashboard.")
+
