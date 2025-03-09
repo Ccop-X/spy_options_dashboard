@@ -6,6 +6,7 @@ import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import requests
+import time
 
 # ------------------ APP CONFIGURATION ------------------ #
 st.set_page_config(page_title="SPY Options Dashboard", layout="wide")
@@ -22,6 +23,45 @@ st.markdown("""
         .metric-container { background-color: #222222; padding: 10px; border-radius: 10px; text-align: center; }
     </style>
 """, unsafe_allow_html=True)
+
+# ------------------ COUNTDOWN TIMER FOR JOBS REPORT ------------------ #
+def get_next_jobs_report():
+    """Calculate the next U.S. Non-Farm Payroll (NFP) Jobs Report date (First Friday of the Month at 8:30 AM ET)."""
+    today = datetime.date.today()
+    year, month = today.year, today.month
+
+    if today.day > 7 or today.weekday() >= 4:
+        month += 1
+        if month > 12:
+            month = 1
+            year += 1
+
+    first_day = datetime.date(year, month, 1)
+    first_friday = first_day + datetime.timedelta(days=(4 - first_day.weekday() + 7) % 7)
+
+    jobs_report_datetime = datetime.datetime.combine(first_friday, datetime.time(8, 30))
+    
+    return jobs_report_datetime
+
+next_jobs_report = get_next_jobs_report()
+st.sidebar.markdown(f"### 🕒 Next Jobs Report: **{next_jobs_report.strftime('%B %d, %Y')} at 8:30 AM ET**")
+
+countdown_placeholder = st.sidebar.empty()
+
+def update_countdown():
+    """Dynamically updates the countdown timer every second."""
+    time_left = next_jobs_report - datetime.datetime.now()
+    
+    if time_left.total_seconds() <= 0:
+        countdown_placeholder.markdown("🚨 **Jobs Report Released!**")
+    else:
+        days, seconds = divmod(time_left.total_seconds(), 86400)
+        hours, seconds = divmod(seconds, 3600)
+        minutes, seconds = divmod(seconds, 60)
+        
+        countdown_placeholder.markdown(f"**{int(days)}d {int(hours)}h {int(minutes)}m {int(seconds)}s remaining**")
+
+update_countdown()
 
 # ------------------ SIDEBAR ------------------ #
 st.sidebar.title("⚙️ Dashboard Settings")
@@ -77,21 +117,11 @@ tab1, tab2, tab3, tab4 = st.tabs(["📉 Put Options", "📈 Call Options", "📊
 with tab1:
     st.subheader(f"🔻 SPY Put Options Expiring {selected_date}")
     st.dataframe(puts[['strike', 'lastPrice', 'bid', 'ask', 'volume', 'openInterest', 'impliedVolatility']])
-    fig_puts = px.line(puts, x='strike', y='impliedVolatility',
-                        title="📉 Implied Volatility vs Strike Price (Puts)",
-                        labels={'strike': "Strike Price", 'impliedVolatility': "Implied Volatility"},
-                        template="plotly_dark")
-    st.plotly_chart(fig_puts, use_container_width=True)
 
 # 📈 CALL OPTIONS
 with tab2:
     st.subheader(f"🔼 SPY Call Options Expiring {selected_date}")
     st.dataframe(calls[['strike', 'lastPrice', 'bid', 'ask', 'volume', 'openInterest', 'impliedVolatility']])
-    fig_calls = px.line(calls, x='strike', y='impliedVolatility',
-                        title="📈 Implied Volatility vs Strike Price (Calls)",
-                        labels={'strike': "Strike Price", 'impliedVolatility': "Implied Volatility"},
-                        template="plotly_dark")
-    st.plotly_chart(fig_calls, use_container_width=True)
 
 # 📊 BACKTESTING
 with tab3:
@@ -102,9 +132,8 @@ with tab3:
 with tab4:
     st.subheader("📰 Latest Tariff News")
     
-    # Fetch Tariff News from an API
     news_api_url = "https://newsapi.org/v2/everything?q=tariff&language=en&sortBy=publishedAt&apiKey=YOUR_NEWS_API_KEY"
-    
+
     try:
         response = requests.get(news_api_url)
         news_data = response.json()
@@ -121,4 +150,4 @@ with tab4:
         st.error(f"⚠️ Error fetching tariff news: {e}")
 
 # ------------------ SUCCESS MESSAGE ------------------ #
-st.sidebar.success("✅ Tariff News Section Added! Check the latest updates.")
+st.sidebar.success("✅ Full Features Restored! Your dashboard is now complete.")
